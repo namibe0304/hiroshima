@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>히로시마 3박 4일 여행 플래너 🍁</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff7675;
+            --primary-dark: #d63031;
+            --bg: #fdfbfb;
+            --card-bg: #ffffff;
+            --text: #2d3436;
+            --text-light: #636e72;
+            --travel: #fab1a0; /* 주황색 - 이동/수속 */
+            --visit: #81ecec; /* 파란색 - 관광/휴식 */
+            --food: #55efc4; /* 초록색 - 식사/쇼핑 */
+        }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            background-image: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary-dark);
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .tabs { display: flex; justify-content: center; flex-wrap: wrap; margin-bottom: 30px; gap: 10px; }
+        .tab-button {
+            padding: 10px 20px; font-size: 1.05rem; font-weight: 700; border: none; border-radius: 30px;
+            cursor: pointer; background: #dfe6e9; color: var(--text-light); transition: all 0.3s ease;
+        }
+        .tab-button.active { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; }
+        
+        .plan-content { display: none; animation: fadeIn 0.5s; }
+        .plan-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .day-card {
+            background: var(--card-bg); border-radius: 20px; padding: 25px; margin-bottom: 25px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-left: 8px solid var(--primary);
+        }
+        .day-title {
+            margin-top: 0; color: var(--primary-dark); font-size: 1.5rem; display: flex; align-items: center;
+            gap: 10px; border-bottom: 2px dashed #ffeaa7; padding-bottom: 15px; margin-bottom: 20px;
+        }
+        .day-title span { background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 1rem; }
+        
+        .timeline { position: relative; padding-left: 35px; margin-top: 10px; }
+        .timeline::before { content: ''; position: absolute; left: 5px; top: 0; bottom: 0; width: 4px; background: #ffeaa7; border-radius: 4px; }
+        
+        .event { position: relative; margin-bottom: 25px; padding-right: 170px; min-height: 80px;}
+        .event:last-child { margin-bottom: 0; }
+        .event::before {
+            content: ''; position: absolute; left: -37px; top: 4px; width: 18px; height: 18px;
+            border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 1;
+        }
+        .event.type-travel::before { background: #e17055; }
+        .event.type-visit::before { background: #0984e3; }
+        .event.type-food::before { background: #00b894; }
+        
+        .time { font-weight: 700; color: #2d3436; font-size: 1.15rem; margin-bottom: 8px; display: inline-block; }
+        .tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; margin-left: 10px; vertical-align: top; margin-top: 2px; }
+        .tag-travel { background: var(--travel); color: #d35400; }
+        .tag-visit { background: var(--visit); color: #0984e3; }
+        .tag-food { background: var(--food); color: #00b894; }
+        
+        .desc { background: #f8f9fa; padding: 15px 20px; border-radius: 12px; font-size: 1.05rem; line-height: 1.6; color: #2d3436; }
+        .desc-sub { display: block; margin-top: 5px; font-size: 0.95rem; color: #636e72; }
+        
+        .action-btns { position: absolute; right: 0; top: 0; display: flex; gap: 5px; z-index: 10; }
+        .btn-sm { padding: 6px 10px; font-size: 0.85rem; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+        .btn-sm:hover { transform: translateY(-2px); }
+        .btn-map { background: #74b9ff; color: white; }
+        .btn-edit { background: #ffeaa7; color: #2d3436; }
+        .btn-delete { background: #ff7675; color: white; }
+        .btn-add { width: 100%; padding: 12px; margin-top: 15px; background: #f1f2f6; border: 2px dashed #ced6e0; border-radius: 12px; font-weight: bold; cursor: pointer; color: #747d8c; font-size: 1rem; transition: 0.2s;}
+        .btn-add:hover { background: #dfe4ea; color: #2f3542; border-color: #a4b0be; }
+        
+        .edit-input { width: 95%; padding: 6px; margin: 3px 0; border: 1px solid #b2bec3; border-radius: 4px; font-family: inherit; font-size: 1rem; }
+        .edit-loc-container { display: none; margin-top: 8px; font-size: 0.9rem; color: #d63031; font-weight: bold; }
+        .event.is-editing .edit-loc-container { display: block; }
+        .event.is-editing .desc { background: #ffeaa7; }
+
+        @media (max-width: 600px) {
+            .event { padding-right: 0; padding-top: 40px; }
+            .action-btns { right: auto; left: 0; top: -5px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>히로시마 3박 4일 여행 플래너 ✈️</h1>
+        <div class="subtitle">모든 수정 사항은 브라우저에 자동 저장됩니다! (데이터 100% 복구 완료)</div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showPlan('plan1', this)">🌟 원안</button>
+            <button class="tab-button" onclick="showPlan('plan2', this)">🚢 결항안(고속선)</button>
+            <button class="tab-button" onclick="showPlan('plan3', this)">🚢 결항안(모든 페리)</button>
+            <button class="tab-button" onclick="showPlan('plan4', this)">☕ 여유안</button>
+        </div>
+
+        <div id="plans-container">
+            <!-- ===================== PLAN 1 : 원안 ===================== -->
+            <div id="plan1" class="plan-content active">
+                <div class="day-card">
+                    <h2 class="day-title">1일 차 <span>11/20 (금)</span></h2>
+                    <div class="timeline">
+                        <div class="event type-travel" data-loc="히로시마 공항">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">13:40 - 15:15</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">비행 · 인천 → 히로시마</span> <span class="desc-sub">제주항공 7C1617 · 예약 메일 시간으로 정정</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="히로시마 혼카와초">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">15:15 - 16:50</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">입국·리무진·숙소 이동</span> <span class="desc-sub">PDF의 16:50 체크인 목표 유지. 입국과 이동에 95분만 배정되어 지연에 민감 · 확정 교통편 시간이 아님</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="히로시마 혼카와초">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">16:50 - 18:30</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">체크인·휴식·저녁 이동</span> <span class="desc-sub">혼카와초 숙소 체크인 후 오코노미무라로 이동 · 원안 순서 유지</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="히로시마 오코노미무라">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">18:30 - 20:00</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">저녁 · 오코노미무라</span> <span class="desc-sub">히로시마식 오코노미야키 · 식사 후 평화공원까지 이동 포함</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="히로시마 평화공원">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">20:00 - 21:00</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">원폭돔·평화공원 야경</span> <span class="desc-sub">원안의 야경 산책 · 피곤하거나 도착이 늦으면 짧게 조정</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="로손">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">21:00 - 21:45</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">편의점·숙소 복귀</span> <span class="desc-sub">로손에서 간단한 아침 준비 후 귀가 · 21시 이후 숙소 정숙 안내 준수</span></div>
+                        </div>
+                    </div>
+                    <button class="btn-add" onclick="addEvent(this)">+ 새로운 일정 추가</button>
+                </div>
+                
+                <div class="day-card">
+                    <h2 class="day-title">2일 차 <span>11/21 (토)</span></h2>
+                    <div class="timeline">
+                        <div class="event type-travel" data-loc="히로시마 선착장">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">07:45 - 08:30</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">선착장 이동·승선 준비</span> <span class="desc-sub">고속선 08:30 출항 기준으로 원안의 출발 시간을 앞당김 · 08:15 매표소 도착 목표</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="미야지마">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">08:30 - 09:15</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">고속선 · 미야지마행</span> <span class="desc-sub">현재 일반 시간표 기준. PDF의 08:40은 반대 방향 시간 · 11/21 조수에 따른 운항·예약 확인 필요</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="이쓰쿠시마 신사">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">09:15 - 10:40</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">이동·이쓰쿠시마 신사</span> <span class="desc-sub">하선 후 이동 · 원안의 09:40 신사 관람 시작 목표 유지</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="모미지다니 공원">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">10:40 - 11:30</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">모미지다니 · 단풍</span> <span class="desc-sub">공원 이동·사진·상점가 방향 이동을 합쳐 50분 배정 · 원안은 체류 시간이 짧음</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="미야지마">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">11:30 - 12:30</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">점심 · 굴·아나고</span> <span class="desc-sub">식사와 대기에 1시간 배정. 연휴 대기가 길면 이와쿠니 일정이 밀릴 수 있음</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="이와쿠니 긴타이교">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">12:30 - 14:25</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">페리·JR·버스 → 긴타이교</span> <span class="desc-sub">미야지마 → 미야지마구치 → 이와쿠니역 → 긴타이교. 원안 14:25 도착 목표 · 연결편 확인 필요</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="이와쿠니성">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">14:25 - 16:15</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">긴타이교·로프웨이·이와쿠니성</span> <span class="desc-sub">원안의 세 곳 모두 유지 · 15:00 성 도착 목표는 대기에 따라 어려울 수 있음 · 입장 마감과 로프웨이 운항 확인</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="히로시마역">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">16:15 - 18:30</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">버스·JR·시내 이동</span> <span class="desc-sub">원안의 18:00 히로시마역 복귀 목표 · 이후 저녁 장소 이동 포함</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="히로시마 굴요리">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">18:30 - 20:30</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">저녁 이동·굴 요리</span> <span class="desc-sub">19:00 저녁 시작 목표 · 긴 외출 뒤에도 식사 장소까지 이동하는 원안</span></div>
+                        </div>
+                    </div>
+                    <button class="btn-add" onclick="addEvent(this)">+ 새로운 일정 추가</button>
+                </div>
+
+                <div class="day-card">
+                    <h2 class="day-title">3일 차 <span>11/22 (일)</span></h2>
+                    <div class="timeline">
+                        <div class="event type-visit" data-loc="히로시마 평화공원">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">09:00 - 10:00</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">숙소 이동·평화공원</span> <span class="desc-sub">09:30 공원 산책 시작 목표 · 원안 순서 유지</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="평화기념자료관">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">10:00 - 12:30</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">평화기념자료관·이동</span> <span class="desc-sub">자료관 2시간 관람 후 점심 장소 이동 · 사전 WEB 티켓 구매 권장</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="히로시마성">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">12:30 - 14:00</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">점심·히로시마성 이동</span> <span class="desc-sub">식사 후 성 외관 방향으로 이동</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="히로시마성">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">14:00 - 15:15</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">히로시마성 외관·정원 이동</span> <span class="desc-sub">천수각 내부 입장 없이 외관과 해자 관람 후 슛케이엔 이동</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="히로시마 슛케이엔">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">15:15 - 17:00</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">슛케이엔·현립미술관·이동</span> <span class="desc-sub">두 곳 관람과 혼도리 이동을 합친 구간 · 정원 일반 운영 17:00 폐원·16:30 입장 마감</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="히로시마 혼도리">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">17:00 - 19:00</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">혼도리 · 카페·쇼핑</span> <span class="desc-sub">원안의 카페·쇼핑 시간 유지</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="히로시마 시내">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">19:00 - 20:30</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">저녁 · 쓰케멘·이자카야</span> <span class="desc-sub">세 명 취향에 맞춰 저녁 선택 · 이후 숙소 복귀</span></div>
+                        </div>
+                    </div>
+                    <button class="btn-add" onclick="addEvent(this)">+ 새로운 일정 추가</button>
+                </div>
+
+                <div class="day-card">
+                    <h2 class="day-title">4일 차 <span>11/23 (월)</span></h2>
+                    <div class="timeline">
+                        <div class="event type-travel" data-loc="숙소">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">09:00 - 10:00</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">짐 정리·체크아웃 준비</span> <span class="desc-sub">숙소 체크아웃 마감 10:00 · 그 전에 퇴실 준비 완료</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="히로시마역">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">10:00 - 10:45</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">역 이동·락커·신사 이동</span> <span class="desc-sub">원안의 10:25 히로시마역 짐 보관 목표 · 빈 락커 탐색 시간이 길면 관광 축소</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="히로시마 도쇼구">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">10:45 - 12:15</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">도쇼구·쓰루하네·메이조인</span> <span class="desc-sub">원안의 세 곳 순회와 역 복귀 포함 · 계단·도보 이동이 이어짐</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="히로시마역 ekie">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">12:15 - 13:10</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">에키에 · 점심·기념품</span> <span class="desc-sub">식사·선물·짐 회수를 마치고 공항버스 승차장으로 이동</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="히로시마 공항">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">13:10 - 14:00</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">리무진 · 히로시마 공항</span> <span class="desc-sub">현재 일반 시간표의 히로시마역 신칸센 출구 출발편 · PDF 14:05 도착 계획에서 시간표에 맞춰 조정</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="히로시마 공항">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">14:00 - 16:15</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">공항 · 수속·출국·대기</span> <span class="desc-sub">출발 2시간 15분 전 도착 목표. 예약 메일의 3시간 전 공항 도착 권고보다 여유가 적음</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="인천공항">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">16:15 - 18:05</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">비행 · 히로시마 → 인천</span> <span class="desc-sub">제주항공 7C1618 · 예약 메일의 실제 도착 시간 반영</span></div>
+                        </div>
+                    </div>
+                    <button class="btn-add" onclick="addEvent(this)">+ 새로운 일정 추가</button>
+                </div>
+            </div>
+
+            <!-- ===================== PLAN 2 : 결항안 (고속선 결항) ===================== -->
+            <div id="plan2" class="plan-content">
+                <div class="day-card" style="text-align:center; color:var(--primary-dark); font-weight:bold;">
+                    📌 1일 차, 3일 차, 4일 차는 원안과 동일하게 진행됩니다.
+                </div>
+                <div class="day-card">
+                    <h2 class="day-title">2일 차 <span>11/21 (토) - 고속선 결항 · 2호선＋일반 페리</span></h2>
+                    <div class="timeline">
+                        <div class="event type-travel" data-loc="미야지마구치역">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">07:30 - 08:45</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">노면전차 2호선 · 미야지마구치</span> <span class="desc-sub">혼카와초에서 미야지마구치 방향으로 이동. 승차 대기와 이동에 75분 배정 · 실제 출발·도착편 확정 시간이 아님</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="미야지마구치 페리 터미널">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">08:45 - 09:30</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">선착장 이동·일반 페리</span> <span class="desc-sub">미야지마구치 일반 페리가 운항할 때 이용. 페리 항해 약 10분, 나머지는 도보·매표·대기 여유 · 고속선 세트권과 별도 승차권 확인</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="이쓰쿠시마 신사">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">09:30 - 10:40</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">이동·이쓰쿠시마 신사</span> <span class="desc-sub">09:40 신사 관람 목표. 원안과 합류하되 도착이 늦으면 이와쿠니성부터 생략</span></div>
+                        </div>
+                        <!-- 원안과 동일하게 이어짐 -->
+                        <div class="event type-visit" data-loc="모미지다니 공원">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">10:40 - 11:30</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">모미지다니 · 단풍</span> <span class="desc-sub">공원 이동·사진·상점가 방향 이동을 합쳐 50분 배정 · 원안은 체류 시간이 짧음</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="미야지마">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">11:30 - 12:30</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">점심 · 굴·아나고</span> <span class="desc-sub">식사와 대기에 1시간 배정. 연휴 대기가 길면 이와쿠니 일정이 밀릴 수 있음</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="이와쿠니 긴타이교">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">12:30 - 14:25</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">페리·JR·버스 → 긴타이교</span> <span class="desc-sub">미야지마 → 미야지마구치 → 이와쿠니역 → 긴타이교. 원안 14:25 도착 목표 · 연결편 확인 필요</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="이와쿠니성">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">14:25 - 16:15</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">긴타이교·로프웨이·이와쿠니성</span> <span class="desc-sub">원안의 세 곳 모두 유지 · 15:00 성 도착 목표는 대기에 따라 어려울 수 있음 · 입장 마감과 로프웨이 운항 확인</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="히로시마역">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">16:15 - 18:30</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">버스·JR·시내 이동</span> <span class="desc-sub">원안의 18:00 히로시마역 복귀 목표 · 이후 저녁 장소 이동 포함</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="히로시마 굴요리">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">18:30 - 20:30</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">저녁 이동·굴 요리</span> <span class="desc-sub">19:00 저녁 시작 목표 · 긴 외출 뒤에도 식사 장소까지 이동하는 원안</span></div>
+                        </div>
+                    </div>
+                    <button class="btn-add" onclick="addEvent(this)">+ 새로운 일정 추가</button>
+                </div>
+            </div>
+
+            <!-- ===================== PLAN 3 : 결항안 (모든 페리 결항) ===================== -->
+            <div id="plan3" class="plan-content">
+                <div class="day-card" style="text-align:center; color:var(--primary-dark); font-weight:bold;">
+                    📌 1일 차, 3일 차, 4일 차는 원안과 동일하게 진행됩니다.
+                </div>
+                <div class="day-card">
+                    <h2 class="day-title">2일 차 <span>11/21 (토) - 미야지마 제외 · 긴타이교＋시내</span></h2>
+                    <div class="timeline">
+                        <div class="event type-travel" data-loc="JR역">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">07:45 - 08:30</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">숙소 → JR역</span> <span class="desc-sub">미야지마로 가는 일반 페리도 결항해 섬 방문을 제외하는 안 · JR·버스 운행 확인 후 출발</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="긴타이교">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">08:30 - 10:00</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">JR·버스 → 긴타이교</span> <span class="desc-sub">이와쿠니역에서 긴타이교행 버스로 환승 · 이동과 대기에 90분 배정</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="이와쿠니 긴타이교">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">10:00 - 12:00</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">긴타이교 · 선택 로프웨이·성</span> <span class="desc-sub">다리와 강변 우선 · 날씨가 좋고 로프웨이가 운행할 때 성 추가. 기상 악화로 로프웨이도 멈추면 생략</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="긴타이교">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">12:00 - 13:15</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">점심·주변 산책</span> <span class="desc-sub">긴타이교 주변 점심 · 굴 요리는 저녁 시내에서 유지</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="히로시마역">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">13:15 - 15:00</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">버스·JR → 히로시마</span> <span class="desc-sub">시내로 복귀 · 환승과 숙소 방향 이동 여유 포함</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="히로시마 혼도리">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">15:00 - 17:00</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">혼도리 · 카페·쇼핑</span> <span class="desc-sub">미야지마 대신 시내에서 쉬며 쇼핑. 다음 날 혼도리 일정은 줄여도 됨</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="숙소">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">17:00 - 18:00</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">숙소 휴식</span> <span class="desc-sub">저녁 전 쉬는 시간 확보</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="히로시마 시내">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">18:00 - 19:30</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">저녁 · 시내 굴 요리</span> <span class="desc-sub">섬 방문을 못해도 굴 요리는 시내에서 즐기는 안</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="숙소">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">19:30 - 20:30</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">숙소 복귀·휴식</span> <span class="desc-sub">날씨가 나쁘면 바로 숙소로 복귀</span></div>
+                        </div>
+                    </div>
+                    <button class="btn-add" onclick="addEvent(this)">+ 새로운 일정 추가</button>
+                </div>
+            </div>
+
+            <!-- ===================== PLAN 4 : 여유안 ===================== -->
+            <div id="plan4" class="plan-content">
+                <div class="day-card">
+                    <h2 class="day-title">1일 차 <span>11/20 (금) - 체크인 여유 · 야경은 선택</span></h2>
+                    <div class="timeline">
+                        <div class="event type-travel" data-loc="히로시마 공항">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">13:40 - 15:15</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">비행 · 인천 → 히로시마</span> <span class="desc-sub">제주항공 7C1617 · 예약 메일 시간으로 정정</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="히로시마 숙소">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">15:15 - 17:30</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">입국·리무진·숙소 이동</span> <span class="desc-sub">입국·수하물·버스 대기 여유를 늘려 17:30 체크인 목표. 현재 일반 시간표의 16:00 공항 출발 → 16:55 버스센터 편을 참고</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="숙소">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">17:30 - 18:30</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">체크인·휴식·저녁 이동</span> <span class="desc-sub">짐 정리 후 쉬고 저녁 장소로 이동</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="오코노미무라">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">18:30 - 20:00</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">저녁 · 오코노미무라</span> <span class="desc-sub">히로시마식 오코노미야키 · 식사 후 평화공원까지 이동 포함</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="원폭돔">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">20:00 - 21:00</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">선택 · 원폭돔·강변 야경</span> <span class="desc-sub">체력이 남으면 짧게 산책. 입국이 늦어지면 숙소 휴식으로 변경</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="로손">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">21:00 - 21:45</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">편의점·숙소 복귀</span> <span class="desc-sub">로손에서 간단한 아침 준비 후 귀가 · 21시 이후 숙소 정숙 안내 준수</span></div>
+                        </div>
+                    </div>
+                    <button class="btn-add" onclick="addEvent(this)">+ 새로운 일정 추가</button>
+                </div>
+
+                <div class="day-card">
+                    <h2 class="day-title">2일 차 <span>11/21 (토) - 미야지마 집중 · 긴타이교·성 제외</span></h2>
+                    <div class="timeline">
+                        <div class="event type-travel" data-loc="선착장">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">07:45 - 08:30</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">선착장 이동·승선 준비</span> <span class="desc-sub">고속선 08:30 출항 기준으로 원안의 출발 시간을 앞당김 · 08:15 매표소 도착 목표</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="미야지마">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">08:30 - 09:15</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">고속선 · 미야지마행</span> <span class="desc-sub">현재 일반 시간표 기준. PDF의 08:40은 반대 방향 시간 · 11/21 조수에 따른 운항·예약 확인 필요</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="이쓰쿠시마 신사">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">09:15 - 10:40</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">이동·이쓰쿠시마 신사</span> <span class="desc-sub">하선 후 이동 · 원안의 09:40 신사 관람 시작 목표 유지</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="모미지다니 공원">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">10:40 - 12:00</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">모미지다니 · 단풍·사진</span> <span class="desc-sub">이동과 사진 시간을 넉넉히 배정. 이와쿠니로 넘어가지 않아 급히 돌아올 필요가 적음</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="미야지마 오모테산도 상점가">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">12:00 - 13:30</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">점심 · 굴·아나고</span> <span class="desc-sub">식사와 대기에 90분 확보. 굴 요리 우선, 아나고는 취향에 따라 선택</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="미야지마 오모테산도 상점가">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">13:30 - 15:00</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">상점가·카페·간식</span> <span class="desc-sub">오모테산도에서 간식·커피·사진. 점심 대기가 길면 이 구간에서 흡수</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="숙소">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">15:00 - 16:45</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">페리·JR → 숙소</span> <span class="desc-sub">미야지마 → 미야지마구치 → JR역 → 숙소. 걷기·대기·환승 포함한 계획용 배정</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="숙소">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">16:45 - 18:00</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">숙소 휴식</span> <span class="desc-sub">저녁 전에 쉬는 시간. 관광을 더 넣지 않아도 됨</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="히로시마 시내">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">18:00 - 19:30</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">저녁 · 굴 또는 다른 메뉴</span> <span class="desc-sub">점심에 굴을 충분히 먹었다면 쓰케멘·이자카야 등으로 변경</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="숙소">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">19:30 - 20:30</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">선택 · 강변 산책·숙소 휴식</span> <span class="desc-sub">숙소 주변 산책 또는 일찍 쉬기</span></div>
+                        </div>
+                    </div>
+                    <button class="btn-add" onclick="addEvent(this)">+ 새로운 일정 추가</button>
+                </div>
+
+                <div class="day-card">
+                    <h2 class="day-title">3일 차 <span>11/22 (일) - 자료관·정원 중심 · 성·미술관 제외</span></h2>
+                    <div class="timeline">
+                        <div class="event type-visit" data-loc="평화공원">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">09:00 - 10:00</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">숙소 이동·평화공원</span> <span class="desc-sub">09:30 공원 산책 시작 목표 · 원안 순서 유지</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="평화기념자료관">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">10:00 - 12:30</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">평화기념자료관·이동</span> <span class="desc-sub">자료관 2시간 관람 후 점심 장소 이동 · 사전 WEB 티켓 구매 권장</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="히로시마">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">12:30 - 14:00</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">점심·쉬는 시간</span> <span class="desc-sub">자료관 관람 후 편하게 식사. 관람이 길어져도 이 구간에서 조정</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="슛케이엔">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">14:00 - 16:00</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">이동·슛케이엔 단풍</span> <span class="desc-sub">히로시마성과 현립미술관은 제외 · 14:30 정원 도착 목표 · 정원과 사진에 집중</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="혼도리">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">16:00 - 18:00</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">혼도리 · 카페·쇼핑</span> <span class="desc-sub">카페와 선물 쇼핑 · 귀국일 오전에 살 물건을 미리 준비</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="히로시마 시내">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">18:00 - 19:30</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">저녁 · 쓰케멘·이자카야</span> <span class="desc-sub">원안보다 이른 저녁 · 숙소 근처 선택 가능</span></div>
+                        </div>
+                        <div class="event type-visit" data-loc="숙소">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">19:30 - 20:30</span> <span class="tag tag-visit">관광·휴식</span></div>
+                            <div class="desc"><span class="desc-title">숙소 복귀·짐 정리</span> <span class="desc-sub">다음 날 귀국 준비 후 휴식</span></div>
+                        </div>
+                    </div>
+                    <button class="btn-add" onclick="addEvent(this)">+ 새로운 일정 추가</button>
+                </div>
+
+                <div class="day-card">
+                    <h2 class="day-title">4일 차 <span>11/23 (월) - 신사 순회 제외 · 공항 13:05 목표</span></h2>
+                    <div class="timeline">
+                        <div class="event type-travel" data-loc="숙소">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">09:00 - 09:45</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">짐 정리·체크아웃</span> <span class="desc-sub">숙소 마감 10:00보다 여유 있게 퇴실</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="히로시마역">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">09:45 - 10:30</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">히로시마역 이동·짐 보관</span> <span class="desc-sub">역 이동과 락커 탐색 시간을 함께 배정. 오전 신사 순회는 제외</span></div>
+                        </div>
+                        <div class="event type-food" data-loc="히로시마역 ekie">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">10:30 - 12:00</span> <span class="tag tag-food">식사·쇼핑</span></div>
+                            <div class="desc"><span class="desc-title">에키에 · 이른 점심·선물</span> <span class="desc-sub">역에서 쇼핑 후 식당 개점 시간에 맞춰 이른 점심. 물건은 전날 미리 사두어도 됨</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="히로시마 공항">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">12:00 - 13:05</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">짐 회수·리무진 → 공항</span> <span class="desc-sub">12:15 히로시마역 신칸센 출구 출발 → 13:05 공항 도착 · 현재 일반 시간표 기준, 여행일 재확인</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="히로시마 공항">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">13:05 - 16:15</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">공항 · 수속·출국·대기</span> <span class="desc-sub">출발 3시간 10분 전 도착 목표. 예약 메일의 공항 3시간 전 도착 권고 반영 · 도로 지연 시 여유는 줄어듦</span></div>
+                        </div>
+                        <div class="event type-travel" data-loc="인천공항">
+                            <div class="action-btns"><button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button><button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button><button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button></div>
+                            <div class="time"><span class="time-text">16:15 - 18:05</span> <span class="tag tag-travel">이동·수속</span></div>
+                            <div class="desc"><span class="desc-title">비행 · 히로시마 → 인천</span> <span class="desc-sub">제주항공 7C1618 · 예약 메일의 실제 도착 시간 반영</span></div>
+                        </div>
+                    </div>
+                    <button class="btn-add" onclick="addEvent(this)">+ 새로운 일정 추가</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 기능 구현 자바스크립트 -->
+    <script>
+        // 페이지 로딩 시 저장된 데이터 불러오기
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedHtml = localStorage.getItem('hiroshima_itinerary_v3');
+            if(savedHtml) {
+                document.getElementById('plans-container').innerHTML = savedHtml;
+            }
+        });
+
+        // 데이터 자동 저장 함수
+        function saveData() {
+            const html = document.getElementById('plans-container').innerHTML;
+            localStorage.setItem('hiroshima_itinerary_v3', html);
+        }
+
+        // 탭 변경
+        function showPlan(planId, btnElement) {
+            document.querySelectorAll('.plan-content').forEach(content => content.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(planId).classList.add('active');
+            btnElement.classList.add('active');
+        }
+
+        // 구글 지도 열기
+        function openMap(btn) {
+            const eventDiv = btn.closest('.event');
+            let loc = eventDiv.getAttribute('data-loc');
+            if(!loc || loc.trim() === '') {
+                loc = eventDiv.querySelector('.desc-title').innerText.replace(/비행 · |선택 · |점심 · |저녁 · |이동·|관람/g, '').trim();
+            }
+            window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(loc), '_blank');
+        }
+
+        // 일정 삭제
+        function deleteEvent(btn) {
+            if(confirm('이 일정을 정말 삭제하시겠습니까?')) {
+                btn.closest('.event').remove();
+                saveData();
+            }
+        }
+
+        // 일정 수정 / 저장 기능
+        function editEvent(btn) {
+            const eventDiv = btn.closest('.event');
+            const isEditing = eventDiv.classList.contains('is-editing');
+            
+            if(isEditing) {
+                // [저장 모드] 입력된 값을 다시 텍스트로 변환
+                eventDiv.querySelector('.time-text').innerText = eventDiv.querySelector('.edit-time').value;
+                eventDiv.querySelector('.desc-title').innerText = eventDiv.querySelector('.edit-title').value;
+                eventDiv.querySelector('.desc-sub').innerText = eventDiv.querySelector('.edit-sub').value;
+                
+                const newLoc = eventDiv.querySelector('.edit-loc').value;
+                eventDiv.setAttribute('data-loc', newLoc);
+                
+                eventDiv.classList.remove('is-editing');
+                btn.innerText = '✏️ 수정';
+                saveData(); // 수정 완료 후 저장
+            } else {
+                // [수정 모드] 텍스트를 인풋 창으로 변환
+                const timeTxt = eventDiv.querySelector('.time-text').innerText;
+                const titleTxt = eventDiv.querySelector('.desc-title').innerText;
+                const subTxt = eventDiv.querySelector('.desc-sub').innerText;
+                const locTxt = eventDiv.getAttribute('data-loc') || titleTxt;
+                
+                eventDiv.querySelector('.time-text').innerHTML = `<input type="text" class="edit-input edit-time" value="${timeTxt}">`;
+                eventDiv.querySelector('.desc-title').innerHTML = `<input type="text" class="edit-input edit-title" value="${titleTxt}">`;
+                eventDiv.querySelector('.desc-sub').innerHTML = `<input type="text" class="edit-input edit-sub" value="${subTxt}">`;
+                
+                // 지도 검색어용 인풋 생성
+                if(!eventDiv.querySelector('.edit-loc-container')) {
+                    eventDiv.querySelector('.desc').insertAdjacentHTML('beforeend', 
+                        `<div class="edit-loc-container">📍 구글지도 검색어: <input type="text" class="edit-input edit-loc" value="${locTxt}"></div>`
+                    );
+                } else {
+                    eventDiv.querySelector('.edit-loc').value = locTxt;
+                }
+                
+                eventDiv.classList.add('is-editing');
+                btn.innerText = '💾 저장';
+            }
+        }
+
+        // 새로운 일정 추가
+        function addEvent(btn) {
+            const timeline = btn.previousElementSibling;
+            const newEvent = document.createElement('div');
+            newEvent.className = 'event type-visit';
+            newEvent.setAttribute('data-loc', '히로시마역');
+            newEvent.innerHTML = `
+                <div class="action-btns">
+                    <button class="btn-sm btn-map" onclick="openMap(this)">🗺️ 지도</button>
+                    <button class="btn-sm btn-edit" onclick="editEvent(this)">✏️ 수정</button>
+                    <button class="btn-sm btn-delete" onclick="deleteEvent(this)">❌ 삭제</button>
+                </div>
+                <div class="time"><span class="time-text">00:00 - 00:00</span> <span class="tag tag-visit">관광·휴식</span></div>
+                <div class="desc">
+                    <span class="desc-title">새로운 일정</span> 
+                    <span class="desc-sub">상세 내용을 입력하세요</span>
+                </div>
+            `;
+            timeline.appendChild(newEvent);
+            saveData();
+            
+            // 추가하자마자 바로 수정 모드로 진입
+            const editBtn = newEvent.querySelector('.btn-edit');
+            editEvent(editBtn);
+        }
+    </script>
+</body>
+</html>
